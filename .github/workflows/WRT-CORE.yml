@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: MIT
-# Copyright (C) 2026 VIKINGYFY
-
 #云编译公用核心
 name: WRT-CORE
 
@@ -69,7 +66,7 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Install BC
         env:
@@ -102,7 +99,7 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
+          sudo -E apt -yqq install dos2unix libfuse-dev
           dos2unix "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
           sudo bash "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
           sudo -E systemctl daemon-reload
@@ -144,19 +141,7 @@ jobs:
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
-#############################测试代码####
-      - name: Update Dae/Daed rules
-        run: |
-         cd ./wrt
-         mkdir -p files/usr/share/dae
-         wget -O files/usr/share/dae/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
-         wget -O files/usr/share/dae/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
-         cd files/usr/share
-         ln -s dae daed
-         ls -l
 
-
-#############################测试代码####
       - name: Check Scripts
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
@@ -170,6 +155,7 @@ jobs:
           key: ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}-${{ env.WRT_DATE }}
           restore-keys: |
             ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}-
+            ${{ env.WRT_ARCH }}-
 
       - name: Refresh the cache
         run: |
@@ -212,23 +198,7 @@ jobs:
           cd ./wrt/
 
           make download -j$(nproc)
-#############################测试代码####
-          
-      - name: Update Dae Core/Config
-        run: |
-          cd ./wrt/
-          wget -O dae.zip https://github.com/daeuniverse/dae/releases/download/v2.0.0/dae-linux-arm64.zip
-          unzip -j dae.zip dae-linux-arm64
-          mkdir -p files/usr/bin
-          mv dae-linux-arm64 files/usr/bin/dae
-          chmod +x files/usr/bin/dae
-          rm -f dae.zip
-                    
-          #chmod 600 build_dir/target-*/root-*/etc/dae/config.dae
-          #ls -l build_dir/target-*/root-*/etc/dae/config.dae
-          
-        
-#############################测试代码####  
+
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
